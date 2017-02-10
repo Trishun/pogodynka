@@ -1,27 +1,22 @@
-// UTFT_Demo_480x320 (C)2013 Henning Karlsen
-// web: http://www.henningkarlsen.com/electronics
-//
-// This program is a demo of how to use most of the functions
-// of the library with a supported display modules.
-//
-// This demo was made for modules with a screen resolution
-// of 480x320 pixels.
-//
-// This program requires the UTFT library.
-//
-
+// Imports
 #include <Adafruit_GFX.h>
 #include <UTFTGLUE.h>
-UTFTGLUE myGLCD(0x9488, A2, A1, A3, A4, A0);
+#include <Wire.h>
+#include <DS3231.h>
 
-uint32_t targetTime = 0;                    // for next 1 second timeout
-int ss = 0;
-int mm = 0;
-int hh = 0;
-int omm = -1;
+// inits
+UTFTGLUE myGLCD(0x9488, A2, A1, A3, A4, A0);
+DS3231 clock;
+RTCDateTime dt;
+
 int sheight;
 int swidth;
-String smm;
+
+int hh;
+int mm;
+int ss;
+float temp, otemp;
+String RTCTime;
 
 
 void setup() {
@@ -29,49 +24,63 @@ void setup() {
   myGLCD.InitLCD();
   myGLCD.setTextSize(1);
   myGLCD.setRotation(180);
-  //  myGLCD.setBackColor(64, 64, 64);
   sheight = myGLCD.height();
   swidth = myGLCD.width();
-  targetTime = millis() + 1000;
   myGLCD.clrScr();
+
+  clock.begin();
+
+  // Clock set to compilation date
+  clock.setDateTime(__DATE__, __TIME__); //to do: comparison if newer
+  //  count_time();
+  //  refresh();
+
 }
 
 void loop()
 {
   count_time();
+  count_temp();
 }
 
 void refresh() {
+  myGLCD.clrScr();
   d_time();
+  d_temp();
+}
+
+void count_temp() {
+  clock.forceConversion();
+  temp = clock.readTemperature();
+  if (temp != otemp) {
+    refresh();
+    otemp = temp;
+  }
+
+}
+
+void d_temp() {
+  myGLCD.setTextSize(4);
+  myGLCD.printNumF(temp, 2, 15, 200);
 }
 
 void count_time() {
-  if (targetTime < millis()) {
-    // Set next update for 1 second later
-    targetTime = millis() + 1000;
-
-    // Adjust the time values by adding 1 second
-    ss++;              // Advance second
-    if (ss == 60) {    // Check for roll-over
-      ss = 0;          // Reset seconds to zero
-      omm = mm;        // Save last minute time for display update
-      mm++;            // Advance minute
-      if (mm > 59) {   // Check for roll-over
-        mm = 0;
-        hh++;          // Advance hour
-        if (hh > 23) { // Check for 24hr roll-over (could roll-over on 13)
-          hh = 0;      // 0 for 24 hour clock, set to 1 for 12 hour clock
-        }
-      }
-    }
-    if (omm != mm) refresh();
+  dt = clock.getDateTime();
+  RTCTime = clock.dateFormat("H:i", dt);
+  hh = dt.hour;
+  mm = dt.minute;
+  if (dt.second == 0) {
+    refresh();
+    delay(50);
   }
 }
 
 void d_time() {
   myGLCD.setTextSize(10);
-  myGLCD.clrScr();
-  omm++;
+
+
+  //  myGLCD.print(RTCTime, 15, 40);
+
   if (hh < 10) {
     myGLCD.printNumI(0, 15, 40);
     myGLCD.printNumI(hh, 75, 40);
