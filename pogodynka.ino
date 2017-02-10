@@ -32,8 +32,14 @@ void setup() {
 
   // Clock set to compilation date
   clock.setDateTime(__DATE__, __TIME__); //to do: comparison if newer
-  //  count_time();
-  //  refresh();
+  for (int i; i < sheight; i += 100) {
+    myGLCD.printNumI(0, i, 0);
+  }
+  for (int i; i < swidth; i += 100) {
+    myGLCD.printNumI(0, 0, i);
+  }
+
+
 
 }
 
@@ -44,7 +50,7 @@ void loop()
 }
 
 void refresh() {
-  myGLCD.clrScr();
+  //  myGLCD.clrScr();
   d_time();
   d_temp();
 }
@@ -56,17 +62,18 @@ void count_temp() {
     refresh();
     otemp = temp;
   }
-
 }
 
 void d_temp() {
   myGLCD.setTextSize(4);
-  myGLCD.printNumF(temp, 2, 15, 200);
+  int x = 15;
+  int y = 200;
+  myGLCD.fillRect(x, y, 135, y + 30);
+  myGLCD.printNumF(temp, 2, x, y);
 }
 
 void count_time() {
   dt = clock.getDateTime();
-  RTCTime = clock.dateFormat("H:i", dt);
   hh = dt.hour;
   mm = dt.minute;
   if (dt.second == 0) {
@@ -77,10 +84,9 @@ void count_time() {
 
 void d_time() {
   myGLCD.setTextSize(10);
-
-
-  //  myGLCD.print(RTCTime, 15, 40);
-
+  int x = 15;
+  int y = 40;
+  myGLCD.fillRect(x, y, swidth - 15, y + 75);
   if (hh < 10) {
     myGLCD.printNumI(0, 15, 40);
     myGLCD.printNumI(hh, 75, 40);
